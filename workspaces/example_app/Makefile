@@ -7,10 +7,15 @@ WINDRES = windres.exe
 MAKE = make.exe
 
 # 目录设置
-SRC_DIR = src/
-INC_DIR = src/includes/
-BUILD_DIR = build/build/
-DEST_DIR = build/dest/
+PROJECT_ROOT = ./
+MAKE_WORKING_DIR = $(PROJECT_ROOT)
+SRC_DIR = $(MAKE_WORKING_DIR)src/
+INC_DIR = $(MAKE_WORKING_DIR)src/includes/
+BUILD_DIR = $(MAKE_WORKING_DIR)build/build/
+DEST_DIR = $(MAKE_WORKING_DIR)build/dest/
+TEST_WORKSPACE= $(MAKE_WORKING_DIR)test/
+TEST_SPACE = $(TEST_WORKSPACE)space/
+TEST_EXECUTOR_DIR = $(TEST_WORKSPACE)tests/
 
 # 编译选项
 CFLAGS = -fdiagnostics-color=always -I"./${SRC_DIR}" -I"./${INC_DIR}"
@@ -26,7 +31,16 @@ $(BUILD_DIR)program_info.o
 # OBJ += $(BUILD_DIR)resource.res
 
 # 目标可执行文件
-TARGET = $(DEST_DIR)Example.exe
+# TARGET_NAME = Example.exe
+TARGET_NAME_TXTFILE = $(PROJECT_ROOT)PROGRAM_NAME.txt
+TARGET_NAME = $(shell type "$(subst /,\\,$(strip $(TARGET_NAME_TXTFILE)))")
+TARGET = $(DEST_DIR)$(TARGET_NAME)
+
+PHONY_TARGETS = help all clean prepare_dir push_test flag_every_time
+
+help:
+	@ echo This will make: $(TARGET_NAME)
+	@ echo .PHONY targets: $(PHONY_TARGETS)
 
 # 目标规则
 all: $(TARGET)
@@ -57,6 +71,8 @@ $(BUILD_DIR)main.o: $(SRC_DIR)main.cpp \
 	@ echo Compiling $@
 	$(CPPC) $(CFLAGS) -c $< -o $@
 
+push_test:
+	copy /Y "$(subst /,\\,$(strip $(TARGET)))" "$(subst /,\\,$(strip $(TEST_SPACE)$(TARGET_NAME)))"
 
 define clean_file
 	del /Q /F "$(subst /,\\,$(1))"
@@ -75,9 +91,10 @@ endef
 prepare_dir:
 	$(call mkdir_withcheck,"$(BUILD_DIR)")
 	$(call mkdir_withcheck,"$(DEST_DIR)")
+	$(call mkdir_withcheck,"$(TEST_SPACE)")
 
 flag_every_time:
 	@ REM "flag_every_time" # @ echo "flag_every_time"	# This will be executed every time
 	
 
-.PHONY: all clean prepare_dir flag_every_time
+.PHONY: $(PHONY_TARGETS)
